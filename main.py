@@ -10,6 +10,10 @@ import json
 bot = telebot.TeleBot(TOKEN)
 @bot.message_handler(commands=['linkstart'])
 def link_open(message):
+    if message.from.username == 'linke9054592735':
+        bot.send_message(message.chat.id, 'master')
+    else:
+        bot.send_message(message.chat.id, '你没有权限')
     pass
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
