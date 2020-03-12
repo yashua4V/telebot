@@ -38,14 +38,14 @@ def test(message):
     chatid = message.chat.id
     
 #   print ('\n'.join(['%s:%s' % item for item in types.__dict__.items()]))
-    markup = types.ReplyKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup()
     print(str(markup.__dict__.items()))
-    itembtn1 = types.KeyboardButton('a')
-    itembtn2 = types.KeyboardButton('v')
-    itembtn3 = types.KeyboardButton('d')
+    itembtn1 = types.InlineKeyboardButton('A',url='http://192.168.1.185')
+    itembtn2 = types.InlineKeyboardButton('B',url='http://192.168.1.185')
+
     print(str(itembtn1.__dict__.items()))
-    markup.add(itembtn1, itembtn2, itembtn3)
-    
+    markup.add(itembtn1,itembtn2)
+
     if message.content_type == 'text':
         text = message.text
         data = {'tag':text}
