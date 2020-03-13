@@ -32,19 +32,12 @@ def send_welcome(message):
 @bot.message_handler(commands=['help'])
 def send_welcome1(message):
     bot.send_message(message.chat.id, text='点餐请发/+菜名或/菜名,如‘/馒头’不会搜索到烤馒头')
-@bot.message_handler(regexp='^/\*.*')
+@bot.message_handler(regexp='^/\-.*')
 def test(message):
-    myurl = 'http://127.0.0.1/getmenu'
+    myurl = 'http://127.0.0.1/getmenutest'
     chatid = message.chat.id
     
-#   print ('\n'.join(['%s:%s' % item for item in types.__dict__.items()]))
     markup = types.InlineKeyboardMarkup()
-    print(str(markup.__dict__.items()))
-    itembtn1 = types.InlineKeyboardButton('A',url='http://192.168.1.185')
-    itembtn2 = types.InlineKeyboardButton('B',url='http://192.168.1.185')
-
-    print(str(itembtn1.__dict__.items()))
-    markup.add(itembtn1,itembtn2)
 
     if message.content_type == 'text':
         text = message.text
@@ -52,31 +45,98 @@ def test(message):
         re = requests.post(myurl,data)
         r = json.loads(re.text)
         if r['status'] == 'success':
-#            for i in r['img_list']:
-#                imgdata=base64.b64decode(i)
-#                bot.send_photo(chatid, imgdata)
-            imgdata = base64.b64decode(r['img_list'][random.randint(0,len(r['img_list'])-1)])
-            bot.send_photo(chatid, imgdata, reply_markup=markup)
+            num_of_fileid = random.randint(0,len(r['fileid_list'])-1)
+            fileid = r['fileid_list'][num_of_fileid]
+            callbackdata = text
+            copylist = r['fileid_list'].copy()
+            a = 15 if len(copylist) > 15 else  len(copylist)
+            count = 1
+            while count < a:
+                i = copylist.pop(random.randint(0,len(copylist)-1))
+                count = count + 1
+                if i == fileid:
+                    continue
+                callbackdata=callbackdata + ',' +  str(r['fileid_list'].index(i))
+            callbackdata=str(callbackdata)
+            print(callbackdata)
+            itembtn1 = types.InlineKeyboardButton('换一张菜单',callback_data=callbackdata)
+            itembtn2 = types.InlineKeyboardButton('取消点餐',callback_data='exit')
+            markup.add(itembtn1,itembtn2)
+            bot.send_message(chatid, fileid, reply_markup=markup)
         else:
             text = '没有搜索到菜单，发送菜单图片添加'
             bot.send_message(chat_id=message.chat.id,reply_to_message_id=message.message_id,text=text)
 
+@bot.callback_query_handler(func=lambda call: True)
+def  test_callback(call):
+    myurl = 'http://127.0.0.1/getmenutest'
+    delurl = 'https://api.telegram.org/bot'+ TOKEN + '/deleteMessage?chat_id=' + str(call.message.chat.id) + '&message_id=' + str(call.message.message_id)
+    chatid = call.message.chat.id
+    if call.data != 'exit':
+        clist = call.data.split(',')
+        cclist = clist[1:]
+        if len(cclist) < 1:
+            requests.get(url=delurl)
+            bot.send_message(chatid, '已经没有符合要求的菜单了，请试试更换搜索条件或上传您喜欢的菜单')
+            exit()
+        text = clist[0]
+        data = {'tag':text}
+        re = requests.post(myurl,data)
+        r = json.loads(re.text)
+        if r['status'] == 'success':
+            num_of_fileid = cclist[random.randint(0,len(cclist)-1)]
+            fileid = r['fileid_list'][int(num_of_fileid)]
+            callbackdata = text
+            for i in cclist:
+                if i == str(num_of_fileid):
+                    continue
+                callbackdata = callbackdata + ',' + str(i)
+            callbackdata=str(callbackdata)
+            print(callbackdata)
+            markup = types.InlineKeyboardMarkup()
+            itembtn1 = types.InlineKeyboardButton('换一张菜单',callback_data=callbackdata)
+            itembtn2 = types.InlineKeyboardButton('取消点餐',callback_data='exit')
+            markup.add(itembtn1,itembtn2)
+            requests.get(url=delurl)
+            bot.send_message(chatid, fileid, reply_markup=markup)
+        else:
+            text = '没有搜索到菜单，发送菜单图片添加'
+            bot.send_message(chat_id=message.chat.id,reply_to_message_id=message.message_id,text=text)
+    else:
+        requests.get(url=delurl)
 
+            
 @bot.message_handler(regexp='^/\+.*')
 def command_url(message):
-    myurl = 'http://127.0.0.1/getmenu'
+    myurl = 'http://127.0.0.1/getmenutest'
     chatid = message.chat.id
+
+    markup = types.InlineKeyboardMarkup()
+
     if message.content_type == 'text':
         text = message.text
         data = {'tag':text}
         re = requests.post(myurl,data)
         r = json.loads(re.text)
         if r['status'] == 'success':
-#            for i in r['img_list']:
-#                imgdata=base64.b64decode(i)
-#                bot.send_photo(chatid, imgdata)
-            imgdata = base64.b64decode(r['img_list'][random.randint(0,len(r['img_list'])-1)])
-            bot.send_photo(chatid, imgdata)
+            num_of_fileid = random.randint(0,len(r['fileid_list'])-1)
+            fileid = r['fileid_list'][num_of_fileid]
+            callbackdata = text
+            copylist = r['fileid_list'].copy()
+            a = 15 if len(copylist) > 15 else  len(copylist)
+            count = 1
+            while count < a:
+                i = copylist.pop(random.randint(0,len(copylist)-1))
+                count = count + 1
+                if i == fileid:
+                    continue
+                callbackdata=callbackdata + ',' +  str(r['fileid_list'].index(i))
+            callbackdata=str(callbackdata)
+            print(callbackdata)
+            itembtn1 = types.InlineKeyboardButton('换一张菜单',callback_data=callbackdata)
+            itembtn2 = types.InlineKeyboardButton('取消点餐',callback_data='exit')
+            markup.add(itembtn1,itembtn2)
+            bot.send_message(chatid, fileid, reply_markup=markup)
         else:
             text = '没有搜索到菜单，发送菜单图片添加'
             bot.send_message(chat_id=message.chat.id,reply_to_message_id=message.message_id,text=text)
@@ -85,18 +145,33 @@ def command_url(message):
 def command_url_pls(message):
     myurl = 'http://127.0.0.1/getmenupls'
     chatid = message.chat.id
-    print(str(message))
+
+    markup = types.InlineKeyboardMarkup()
+
     if message.content_type == 'text':
         text = message.text
         data = {'tag':text}
         re = requests.post(myurl,data)
         r = json.loads(re.text)
         if r['status'] == 'success':
-#            for i in r['img_list']:
-#                imgdata=base64.b64decode(i)
-#                bot.send_photo(chatid, imgdata)
-            imgdata = base64.b64decode(r['img_list'][random.randint(0,len(r['img_list'])-1)])
-            bot.send_photo(chatid, imgdata)
+            num_of_fileid = random.randint(0,len(r['fileid_list'])-1)
+            fileid = r['fileid_list'][num_of_fileid]
+            callbackdata = text
+            copylist = r['fileid_list'].copy()
+            a = 15 if len(copylist) > 15 else  len(copylist)
+            count = 1
+            while count < a:
+                i = copylist.pop(random.randint(0,len(copylist)-1))
+                count = count + 1
+                if i == fileid:
+                    continue
+                callbackdata=callbackdata + ',' +  str(r['fileid_list'].index(i))
+            callbackdata=str(callbackdata)
+            print(callbackdata)
+            itembtn1 = types.InlineKeyboardButton('换一张菜单',callback_data=callbackdata)
+            itembtn2 = types.InlineKeyboardButton('取消点餐',callback_data='exit')
+            markup.add(itembtn1,itembtn2)
+            bot.send_message(chatid, fileid, reply_markup=markup)
         else:
             text = '没有搜索到菜单，发送菜单图片添加'
             bot.send_message(chat_id=message.chat.id,reply_to_message_id=message.message_id,text=text)
